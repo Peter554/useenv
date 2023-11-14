@@ -11,13 +11,23 @@ class ConfigNotFound(Exception):
     ...
 
 
+class UnknownEnv(Exception):
+    ...
+
+
+class KeyNotFound(Exception):
+    ...
+
 
 @cli.command()
 def useenv(env_identifier: str, dry: bool = False) -> None:
     config_path, config = _get_config()
 
     env_file_path = config_path.parent / config["env_file"]
-    delta_env = config["envs"][env_identifier]
+    try:
+        delta_env = config["envs"][env_identifier]
+    except KeyError:
+        raise UnknownEnv(f"{env_identifier} is not a configured environment")
 
     with open(env_file_path) as f:
         current_env_lines = f.read().splitlines(keepends=False)
@@ -27,11 +37,16 @@ def useenv(env_identifier: str, dry: bool = False) -> None:
         if not line or line.startswith("#"):
             new_env_lines.append(line)
             continue
-        key, value = line.split("=", maxsplit=1)
+        key, _ = line.split("=", maxsplit=1)
         if key in delta_env:
-            new_env_lines.append(f"{key}={delta_env[key]}")
+            new_value = delta_env.pop(key)
+            new_env_lines.append(f"{key}={new_value}")
         else:
             new_env_lines.append(line)
+
+    if delta_env:
+        raise KeyNotFound(f"No key found for keys: {', '.join(delta_env.keys())}")
+
     new_env = "\n".join(new_env_lines) + "\n"
 
     if dry:

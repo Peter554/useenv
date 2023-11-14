@@ -1,3 +1,6 @@
+[project]
+requires-python = ">=3.10"
+
 [tool.poetry]
 name = "useenv"
 version = "0.1.0"
@@ -12,6 +15,10 @@ pyyaml = "^6.0.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.10.1"
+pytest = "^7.4.3"
+ruff = "^0.1.5"
+mypy = "^1.7.0"
+types-pyyaml = "^6.0.12.12"
 
 [tool.poetry.scripts]
 useenv = "useenv:cli"
@@ -19,3 +26,6 @@ useenv = "useenv:cli"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+select = ["E", "F", "I", "UP"]
