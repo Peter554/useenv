@@ -19,6 +19,7 @@ class UnknownEnv(Exception):
 class KeyNotFound(Exception):
     ...
 
+
 class FailedToFetchFrom1Pw(Exception):
     ...
 
@@ -61,11 +62,23 @@ def useenv(env_identifier: str, dry: bool = False) -> None:
 
 
 def _get_config() -> tuple[pathlib.Path, dict]:
-    config_path = pathlib.Path(os.getcwd()) / ".useenv"
-    while not config_path.is_file():
-        config_path = config_path.parent.parent / ".useenv"
-        if config_path.parent == pathlib.Path("/"):
-            raise ConfigNotFound
+    config_directory = pathlib.Path(os.getcwd())
+    found = False
+    while True:
+        for config_path in [
+            config_directory / ".useenv",
+            config_directory / ".useenv.yml",
+            config_directory / ".useenv.yaml",
+        ]:
+            if config_path.is_file():
+                found = True
+                break
+        if found:
+            break
+        else:
+            if config_directory == pathlib.Path("/"):
+                raise ConfigNotFound
+            config_directory = config_directory.parent
 
     with open(config_path) as f:
         config = yaml.safe_load(f)

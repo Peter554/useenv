@@ -5,11 +5,11 @@ Useful in some rare circumstances e.g. swapping variables in local development,
 when you don't want to maintain multiple separate env files.  
 
 * `pipx install useenv`
-* Create a `.useenv` config file in your project root. 
-  * If this contains secret values then make sure to add `.useenv` to your project or global `.gitignore`.
+* Create a `.useenv.yml` config file in your project root. 
+  * If this contains secret values then make sure to add `.useenv.yml` to your project or global `.gitignore`.
 * `useenv <env_identifier>`
 
-Example `.useenv` config file:
+Example `.useenv.yml` config file:
 
 ```
 env_file: .env
