@@ -1,6 +1,7 @@
 import os
 import pathlib
 import subprocess
+from typing import Any
 
 import typer
 import yaml
@@ -86,11 +87,13 @@ def _get_config() -> tuple[pathlib.Path, dict]:
     return config_path, config
 
 
-def _get_value(value: str) -> str:
-    if value.startswith("1pw::"):
+def _get_value(value: Any) -> str:
+    if value is None:
+        return ""
+    elif isinstance(value, str) and value.startswith("1pw::"):
         return _get_value_from_1pw(value)
     else:
-        return value
+        return str(value)
 
 
 def _get_value_from_1pw(value: str) -> str:
