@@ -1,5 +1,6 @@
 import os
 import pathlib
+import subprocess
 
 import typer
 import yaml
@@ -18,6 +19,9 @@ class UnknownEnv(Exception):
 class KeyNotFound(Exception):
     ...
 
+class FailedToFetchFrom1Pw(Exception):
+    ...
+
 
 @cli.command()
 def useenv(env_identifier: str, dry: bool = False) -> None:
@@ -26,8 +30,8 @@ def useenv(env_identifier: str, dry: bool = False) -> None:
     env_file_path = config_path.parent / config["env_file"]
     try:
         delta_env = config["envs"][env_identifier]
-    except KeyError:
-        raise UnknownEnv(f"{env_identifier} is not a configured environment")
+    except KeyError as e:
+        raise UnknownEnv(f"{env_identifier} is not a configured environment") from e
 
     with open(env_file_path) as f:
         current_env_lines = f.read().splitlines(keepends=False)
@@ -39,7 +43,7 @@ def useenv(env_identifier: str, dry: bool = False) -> None:
             continue
         key, _ = line.split("=", maxsplit=1)
         if key in delta_env:
-            new_value = delta_env.pop(key)
+            new_value = _get_value(delta_env.pop(key))
             new_env_lines.append(f"{key}={new_value}")
         else:
             new_env_lines.append(line)
@@ -67,3 +71,22 @@ def _get_config() -> tuple[pathlib.Path, dict]:
         config = yaml.safe_load(f)
 
     return config_path, config
+
+
+def _get_value(value: str) -> str:
+    if value.startswith("1pw::"):
+        return _get_value_from_1pw(value)
+    else:
+        return value
+
+
+def _get_value_from_1pw(value: str) -> str:
+    _, item_id, field = value.split("::")
+    result = subprocess.run(
+        ["op", "item", "get", item_id, "--field", field], capture_output=True, text=True
+    )
+    try:
+        result.check_returncode()
+    except subprocess.CalledProcessError as e:
+        raise FailedToFetchFrom1Pw(result.stderr.strip()) from e
+    return result.stdout.strip()
