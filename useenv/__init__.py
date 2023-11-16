@@ -64,7 +64,7 @@ def _merge(config: dict, env_file_path: str, env_identifier: str, dry: bool) -> 
         if not line or line.startswith("#"):
             new_env_lines.append(line)
             continue
-        key, _ = line.split("=", maxsplit=1)
+        key, *_ = line.split("=")
         if key in delta_env:
             new_value = delta_env.pop(key)
             new_env_lines.append(f"{key}={new_value}")
@@ -127,13 +127,19 @@ def _get_config() -> tuple[pathlib.Path, dict]:
 
 
 def _substitute_values(env: dict) -> None:
+    none_keys = set()
     for k, v in env.items():
         if v is None:
+            none_keys.add(k)
             env[k] = ""
         else:
             env[k] = str(v)
 
     _substitute_1pw_values(env)
+
+    for k, v in env.items():
+        if k not in none_keys:
+            env[k] = f'"{v.encode("unicode_escape").decode("utf-8")}"'
 
 
 def _substitute_1pw_values(env: dict) -> None:

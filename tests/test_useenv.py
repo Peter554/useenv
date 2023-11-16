@@ -4,24 +4,28 @@ import pytest
 
 import useenv
 
-CONFIG = """\
-env_file: .testenv
+CONFIG = r"""env_file: .testenv
 envs:
     e1:
         FOO: e1foo
         BAR: e1bar
     e2:
-        FOO: e2foo
-        BAR: e2bar
+        FOO:
+        BAR: ""
+        BAX: e2bax
     extra:
         FOO: extrafoo
         HELLO: World
+    newlinevalues:
+        FOO: "foo\nfoo"
+    escapednewlinevalues:
+        FOO: "foo\\nfoo"
 """
 
-ENV = """\
-FOO=foo
-BAR=bar
-BAZ=baz
+ENV = r"""FOO="foo"
+BAR="bar"
+BAZ="baz"
+BAX=
 """
 
 
@@ -41,10 +45,10 @@ def test_merge(files):
     with open(".testenv") as f:
         assert (
             f.read()
-            == """\
-FOO=e1foo
-BAR=e1bar
-BAZ=baz
+            == r"""FOO="e1foo"
+BAR="e1bar"
+BAZ="baz"
+BAX=
 """
         )
 
@@ -52,10 +56,10 @@ BAZ=baz
     with open(".testenv") as f:
         assert (
             f.read()
-            == """\
-FOO=e2foo
-BAR=e2bar
-BAZ=baz
+            == r"""FOO=
+BAR=""
+BAZ="baz"
+BAX="e2bax"
 """
         )
 
@@ -68,11 +72,35 @@ def test_merge_extra_keys(files):
     with open(".testenv") as f:
         assert (
             f.read()
-            == """\
-FOO=extrafoo
-BAR=bar
-BAZ=baz
-HELLO=World
+            == r"""FOO="extrafoo"
+BAR="bar"
+BAZ="baz"
+BAX=
+HELLO="World"
+"""
+        )
+
+
+def test_newlines_in_values(files):
+    useenv.useenv("newlinevalues", mode=useenv.Mode.MERGE)
+    with open(".testenv") as f:
+        assert (
+            f.read()
+            == r"""FOO="foo\nfoo"
+BAR="bar"
+BAZ="baz"
+BAX=
+"""
+        )
+
+    useenv.useenv("escapednewlinevalues", mode=useenv.Mode.MERGE)
+    with open(".testenv") as f:
+        assert (
+            f.read()
+            == r"""FOO="foo\\nfoo"
+BAR="bar"
+BAZ="baz"
+BAX=
 """
         )
 
@@ -82,9 +110,8 @@ def test_create(files):
     with open(".testenv") as f:
         assert (
             f.read()
-            == """\
-FOO=e1foo
-BAR=e1bar
+            == r"""FOO="e1foo"
+BAR="e1bar"
 """
         )
 
