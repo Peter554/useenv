@@ -31,7 +31,7 @@ envs:
 
 ### `merge` (default)
 
-Values will be merged into the existing env file.
+Values will be merged into the existing env file, or create it if it doesn't exist.
 
 ### `create`
 
